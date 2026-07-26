@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Kesho Markets — Demo Trading Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0F1C;
+  --panel:#111A2B;
+  --panel-2:#16213A;
+  --panel-3:#1C2942;
+  --border:#223049;
+  --text:#EAF0FA;
+  --muted:#8493AC;
+  --muted-2:#5C6A85;
+  --gold:#E8B84B;
+  --gold-soft:rgba(232,184,75,0.14);
+  --buy:#1FCB84;
+  --buy-bg:rgba(31,203,132,0.12);
+  --sell:#FF5C6C;
+  --sell-bg:rgba(255,92,108,0.12);
+  --radius:14px;
+  --shadow:0 8px 30px rgba(0,0,0,0.35);
+}
+html[data-theme="light"]{
+  --bg:#F3F5FA;
+  --panel:#FFFFFF;
+  --panel-2:#F3F6FB;
+  --panel-3:#EAEFF7;
+  --border:#DCE3EF;
+  --text:#0E1524;
+  --muted:#5B6579;
+  --muted-2:#8896AC;
+  --gold:#B8862A;
+  --gold-soft:rgba(184,134,42,0.10);
+  --shadow:0 8px 24px rgba(20,30,60,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',system-ui,sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+  transition:background .3s ease, color .3s ease;
+}
+.mono{font-family:'JetBrains Mono',monospace;}
+.disp{font-family:'Space Grotesk',sans-serif;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input{font-family:inherit;}
+::selection{background:var(--gold-soft);}
+
+/* ---------- Demo ribbon ---------- */
+.demo-ribbon{
+  background:linear-gradient(90deg,var(--gold),#F3D383);
+  color:#20160A;
+  text-align:center;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.04em;
+  padding:6px 12px;
+  position:sticky;
+  top:0;
+  z-index:200;
+}
+
+/* ================= AUTH SCREEN ================= */
+#screen-auth{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  position:relative;
+}
+.bg-grid{
+  position:fixed;inset:0;z-index:-1;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size:48px 48px;
+  opacity:.35;
+  mask-image:radial-gradient(circle at 50% 30%, black, transparent 75%);
+}
+.auth-card{
+  width:100%;
+  max-width:420px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:36px 32px;
+  box-shadow:var(--shadow);
+  position:relative;
+  z-index:1;
+}
+.brand-mark{
+  display:flex;align-items:center;gap:10px;margin-bottom:28px;
+}
+.brand-glyph{
+  width:36px;height:36px;border-radius:9px;
+  background:linear-gradient(135deg,var(--gold),#8E6A1F);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk';font-weight:700;color:#1A1206;font-size:18px;
+}
+.brand-name{font-family:'Space Grotesk';font-weight:700;font-size:19px;letter-spacing:-.01em;}
+.brand-sub{font-size:11px;color:var(--muted);letter-spacing:.03em;}
+
+.auth-head h1{font-family:'Space Grotesk';font-size:24px;font-weight:600;margin-bottom:6px;letter-spacing:-.01em;}
+.auth-head p{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:26px;}
+
+.field-label{font-size:12px;color:var(--muted);margin-bottom:8px;display:block;font-weight:500;}
+.phone-row{
+  display:flex;align-items:center;gap:0;
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  transition:border-color .2s;
+}
+.phone-row:focus-within{border-color:var(--gold);}
+.phone-prefix{
+  padding:14px 12px 14px 16px;color:var(--muted);font-size:15px;font-family:'JetBrains Mono';border-right:1px solid var(--border);
+}
+#phoneInput{
+  flex:1;background:transparent;border:none;outline:none;color:var(--text);
+  padding:14px 14px;font-size:15px;font-family:'JetBrains Mono';letter-spacing:.02em;
+}
+.field-hint{font-size:12px;color:var(--muted-2);margin-top:8px;min-height:16px;}
+.field-hint.error{color:var(--sell);}
+
+.btn{
+  width:100%;padding:15px;border-radius:12px;font-weight:600;font-size:14.5px;
+  transition:transform .15s ease, opacity .15s ease, box-shadow .15s ease;
+  letter-spacing:.01em;
+}
+.btn:active{transform:scale(.98);}
+.btn-gold{
+  background:linear-gradient(135deg,var(--gold),#C79A3A);
+  color:#1A1206;
+  box-shadow:0 6px 20px rgba(232,184,75,0.25);
+}
+.btn-gold:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
+.btn-gold:hover:not(:disabled){box-shadow:0 8px 26px rgba(232,184,75,0.38);}
+.btn-outline{
+  background:transparent;border:1px solid var(--border);color:var(--text);
+}
+.btn-outline:hover{border-color:var(--gold);}
+
+/* verification block */
+.verify-wrap{display:none;margin-top:22px;text-align:center;padding:18px 0 4px;}
+.verify-wrap.show{display:block;}
+.radar{
+  width:96px;height:96px;margin:0 auto 18px;position:relative;
+}
+.radar-ring{
+  position:absolute;inset:0;border-radius:50%;
+  border:1.5px solid var(--gold);
+  opacity:0;
+  animation:pulse 2.1s ease-out infinite;
+}
+.radar-ring:nth-child(2){animation-delay:.7s;}
+.radar-ring:nth-child(3){animation-delay:1.4s;}
+@keyframes pulse{
+  0%{transform:scale(.35);opacity:.9;}
+  100%{transform:scale(1.15);opacity:0;}
+}
+.radar-core{
+  position:absolute;inset:0;margin:auto;width:52px;height:52px;border-radius:50%;
+  background:var(--panel-2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk';font-weight:700;font-size:18px;color:var(--gold);
+}
+.verify-text{font-size:14px;color:var(--text);font-weight:500;margin-bottom:4px;}
+.verify-sub{font-size:12px;color:var(--muted);}
+.verify-done{display:none;}
+.verify-done.show{display:block;}
+.check-badge{
+  width:52px;height:52px;border-radius:50%;background:var(--buy-bg);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 14px;
+  color:var(--buy);font-size:24px;
+  animation:pop .35s ease;
+}
+@keyframes pop{from{transform:scale(.6);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+.disclosure{
+  margin-top:22px;padding:12px 14px;border-radius:10px;background:var(--panel-2);
+  border:1px solid var(--border);font-size:11.5px;line-height:1.6;color:var(--muted);
+}
+.disclosure b{color:var(--text);}
+
+/* ================= TERMINAL ================= */
+#screen-terminal{display:none;min-height:100vh;flex-direction:column;}
+#screen-terminal.show{display:flex;}
+
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;border-bottom:1px solid var(--border);background:var(--panel);
+  position:sticky;top:0;z-index:100;
+  gap:16px;
+}
+.topbar-left{display:flex;align-items:center;gap:24px;min-width:0;}
+.nav-tabs{display:flex;gap:4px;background:var(--panel-2);padding:4px;border-radius:10px;}
+.nav-tab{padding:8px 14px;font-size:13px;font-weight:600;border-radius:7px;color:var(--muted);white-space:nowrap;}
+.nav-tab.active{background:var(--gold);color:#1A1206;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.balance-pill{
+  display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--border);
+  padding:8px 14px;border-radius:10px;
+}
+.balance-pill .bl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.balance-pill .bv{font-family:'JetBrains Mono';font-weight:600;font-size:14px;}
+.icon-btn{
+  width:36px;height:36px;border-radius:9px;background:var(--panel-2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text);
+}
+.icon-btn:hover{border-color:var(--gold);}
+
+.view{display:none;flex:1;}
+.view.active{display:flex;flex-direction:column;}
+
+/* ---- Trade view ---- */
+#view-trade{flex-direction:row;}
+.market-sidebar{
+  width:230px;flex-shrink:0;border-right:1px solid var(--border);background:var(--panel);
+  overflow-y:auto;
+}
+.market-sidebar .hd{padding:14px 16px 8px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.market-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 16px;border-left:2px solid transparent;
+}
+.market-item:hover{background:var(--panel-2);}
+.market-item.active{background:var(--gold-soft);border-left-color:var(--gold);}
+.mi-name{font-size:13.5px;font-weight:600;}
+.mi-tag{font-size:10px;color:var(--muted);margin-top:2px;}
+.mi-price{font-family:'JetBrains Mono';font-size:12.5px;font-weight:600;text-align:right;}
+.mi-chg{font-size:10.5px;text-align:right;font-family:'JetBrains Mono';}
+.up{color:var(--buy);}
+.down{color:var(--sell);}
+
+.chart-col{flex:1;display:flex;flex-direction:column;min-width:0;}
+.chart-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;
+}
+.ch-title{font-family:'Space Grotesk';font-weight:700;font-size:19px;}
+.ch-price{font-family:'JetBrains Mono';font-size:22px;font-weight:600;}
+.ch-meta{display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
+.ch-stat{font-size:11px;color:var(--muted);}
+.ch-stat b{display:block;font-family:'JetBrains Mono';color:var(--text);font-size:13px;font-weight:600;margin-top:2px;}
+.chart-area{flex:1;position:relative;min-height:280px;padding:10px 0;}
+canvas{width:100%;height:100%;display:block;}
+
+.positions-panel{border-top:1px solid var(--border);background:var(--panel);}
+.pp-tabs{display:flex;gap:2px;padding:10px 20px 0;border-bottom:1px solid var(--border);}
+.pp-tab{padding:9px 4px;margin-right:20px;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;}
+.pp-tab.active{color:var(--text);border-color:var(--gold);}
+.pp-body{max-height:220px;overflow-y:auto;padding:6px 20px 14px;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{text-align:left;color:var(--muted);font-weight:500;padding:8px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.03em;position:sticky;top:0;background:var(--panel);}
+td{padding:10px 6px;border-top:1px solid var(--border);font-family:'JetBrains Mono';}
+.side-tag{padding:2px 8px;border-radius:5px;font-size:10.5px;font-weight:700;font-family:'Inter';}
+.side-tag.buy{background:var(--buy-bg);color:var(--buy);}
+.side-tag.sell{background:var(--sell-bg);color:var(--sell);}
+.close-btn{padding:5px 10px;border-radius:6px;background:var(--panel-3);border:1px solid var(--border);font-size:11px;font-weight:600;font-family:'Inter';}
+.close-btn:hover{border-color:var(--sell);color:var(--sell);}
+.empty-row td{text-align:center;color:var(--muted-2);padding:26px;font-family:'Inter';}
+
+.order-panel{
+  width:300px;flex-shrink:0;border-left:1px solid var(--border);background:var(--panel);
+  padding:18px;overflow-y:auto;
+}
+.op-title{font-family:'Space Grotesk';font-weight:700;font-size:15px;margin-bottom:16px;}
+.op-row{margin-bottom:16px;}
+.op-row label{font-size:11px;color:var(--muted);margin-bottom:7px;display:block;font-weight:500;text-transform:uppercase;letter-spacing:.03em;}
+.amt-input{
+  width:100%;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;color:var(--text);font-family:'JetBrains Mono';font-size:15px;outline:none;
+}
+.amt-input:focus{border-color:var(--gold);}
+.chip-row{display:flex;gap:6px;margin-top:8px;}
+.chip{flex:1;padding:7px 0;text-align:center;font-size:11.5px;font-weight:600;background:var(--panel-2);border:1px solid var(--border);border-radius:7px;color:var(--muted);}
+.chip:hover{border-color:var(--gold);color:var(--text);}
+.lev-track{display:flex;align-items:center;gap:10px;}
+input[type=range]{flex:1;accent-color:var(--gold);}
+.lev-val{font-family:'JetBrains Mono';font-size:13px;font-weight:600;width:38px;text-align:right;}
+.bs-row{display:flex;gap:10px;margin-top:22px;}
+.btn-buy{background:linear-gradient(135deg,var(--buy),#128F5C);color:#06251A;box-shadow:0 6px 18px rgba(31,203,132,0.25);}
+.btn-sell{background:linear-gradient(135deg,var(--sell),#C23140);color:#2B0507;box-shadow:0 6px 18px rgba(255,92,108,0.25);}
+.op-summary{margin-top:16px;padding:12px 14px;border-radius:10px;background:var(--panel-2);border:1px solid var(--border);font-size:11.5px;color:var(--muted);line-height:1.9;}
+.op-summary span{color:var(--text);font-family:'JetBrains Mono';float:right;}
+
+/* ---- Deposits view ---- */
+#view-deposit,#view-withdraw{padding:26px 28px;overflow-y:auto;}
+.view-head{margin-bottom:22px;}
+.view-head h2{font-family:'Space Grotesk';font-size:22px;font-weight:700;margin-bottom:6px;}
+.view-head p{color:var(--muted);font-size:13.5px;}
+.demo-banner{
+  display:flex;align-items:center;gap:10px;background:var(--gold-soft);border:1px solid var(--gold);
+  padding:10px 14px;border-radius:10px;font-size:12.5px;color:var(--text);margin-bottom:22px;font-weight:500;
+}
+.merchant-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:26px;}
+.merchant-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;
+}
+.mc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.mc-name{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:6px;}
+.verified-badge{
+  display:inline-flex;align-items:center;gap:3px;background:var(--buy-bg);color:var(--buy);
+  padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;
+}
+.mc-rating{font-size:12px;color:var(--gold);font-family:'JetBrains Mono';}
+.mc-methods{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;}
+.method-chip{
+  display:flex;align-items:center;gap:5px;background:var(--panel-2);border:1px solid var(--border);
+  padding:5px 9px;border-radius:7px;font-size:11px;color:var(--muted);
+}
+.method-dot{width:7px;height:7px;border-radius:50%;}
+.mc-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;font-size:11px;color:var(--muted);}
+.mc-stats b{display:block;color:var(--text);font-family:'JetBrains Mono';font-size:12.5px;margin-top:2px;}
+.mc-status{font-size:11px;color:var(--buy);display:flex;align-items:center;gap:5px;margin-bottom:12px;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--buy);animation:blink 1.6s infinite;}
+@keyframes blink{50%{opacity:.3;}}
+
+.form-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:440px;}
+.form-card h3{font-family:'Space Grotesk';font-size:15px;margin-bottom:16px;}
+.seg-row{display:flex;gap:8px;margin-bottom:18px;}
+.seg{flex:1;padding:10px;text-align:center;font-size:12.5px;font-weight:600;background:var(--panel-2);border:1px solid var(--border);border-radius:9px;color:var(--muted);}
+.seg.active{background:var(--gold-soft);border-color:var(--gold);color:var(--text);}
+
+.status-tracker{display:none;margin-top:20px;}
+.status-tracker.show{display:block;}
+.st-steps{display:flex;justify-content:space-between;position:relative;margin-bottom:8px;}
+.st-steps::before{
+  content:'';position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--border);z-index:0;
+}
+.st-step{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;}
+.st-dot{width:26px;height:26px;border-radius:50%;background:var(--panel-2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted-2);transition:all .3s;}
+.st-dot.done{background:var(--buy);border-color:var(--buy);color:#06251A;}
+.st-dot.active{border-color:var(--gold);color:var(--gold);animation:ringpulse 1.2s infinite;}
+@keyframes ringpulse{0%,100%{box-shadow:0 0 0 0 var(--gold-soft);}50%{box-shadow:0 0 0 6px var(--gold-soft);}}
+.st-label{font-size:10.5px;color:var(--muted);text-align:center;}
+.st-msg{text-align:center;font-size:12.5px;color:var(--muted);margin-top:14px;}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--panel-3);border:1px solid var(--border);padding:12px 20px;border-radius:10px;
+  font-size:13px;font-weight:500;box-shadow:var(--shadow);z-index:999;opacity:0;transition:all .3s ease;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.buy{border-color:var(--buy);color:var(--buy);}
+.toast.sell{border-color:var(--sell);color:var(--sell);}
+
+/* mobile */
+.mobile-nav{display:none;}
+@media (max-width:900px){
+  .order-panel{position:fixed;right:0;top:0;bottom:0;width:86%;max-width:340px;transform:translateX(100%);transition:transform .25s ease;z-index:150;box-shadow:-10px 0 30px rgba(0,0,0,.4);}
+  .order-panel.open{transform:translateX(0);}
+  .market-sidebar{position:fixed;left:0;top:0;bottom:0;width:78%;max-width:300px;transform:translateX(-100%);transition:transform .25s ease;z-index:150;}
+  .market-sidebar.open{transform:translateX(0);}
+  .nav-tabs{display:none;}
+  .mobile-nav{
+    display:flex;position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--border);
+    padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:100;
+  }
+  .mnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted);padding:6px 0;font-weight:600;}
+  .mnav-item.active{color:var(--gold);}
+  .mnav-item .ic{font-size:17px;}
+  .topbar{padding:10px 14px;}
+  .balance-pill .bl{display:none;}
+  .ch-price{font-size:18px;}
+  .chart-head{padding:12px 14px;}
+  #view-trade{flex-direction:column;}
+  .chart-area{min-height:220px;}
+  .auth-card{padding:28px 22px;}
+  .merchant-grid{grid-template-columns:1fr;}
+}
+.scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:140;}
+.scrim.show{display:block;}
+</style>
+</head>
+<body>
+
+<div class="demo-ribbon">DEMO MODE — Virtual currency only. No real money is deposited, traded, or withdrawn on this platform.</div>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="screen-auth">
+  <div class="bg-grid"></div>
+  <div class="auth-card">
+    <div class="brand-mark">
+      <div class="brand-glyph">K</div>
+      <div>
+        <div class="brand-name">Kesho Markets</div>
+        <div class="brand-sub">Virtual trading simulator</div>
+      </div>
+    </div>
+
+    <div id="authStep1">
+      <div class="auth-head">
+        <h1>Enter your number</h1>
+        <p>Use a Kenyan mobile number to open your simulator account. This unlocks a practice account only — no real transactions occur.</p>
+      </div>
+      <span class="field-label">Mobile number</span>
+      <div class="phone-row">
+        <span class="phone-prefix">+254</span>
+        <input id="phoneInput" type="tel" inputmode="numeric" placeholder="712 345 678" maxlength="9">
+      </div>
+      <div class="field-hint" id="phoneHint">Format: 7XX XXX XXX or 1XX XXX XXX</div>
+      <button class="btn btn-gold" id="startVerifyBtn" style="margin-top:16px" disabled>Continue</button>
+
+      <div class="verify-wrap" id="verifyWrap">
+        <div class="radar">
+          <div class="radar-ring"></div>
+          <div class="radar-ring"></div>
+          <div class="radar-ring"></div>
+          <div class="radar-core mono" id="countdownNum">15</div>
+        </div>
+        <div class="verify-text" id="verifyText">Verifying your number…</div>
+        <div class="verify-sub">Setting up your practice account</div>
+
+        <div class="verify-done" id="verifyDone">
+          <div class="check-badge">✓</div>
+          <div class="verify-text">Number confirmed for simulator access</div>
+          <div class="verify-sub mono" id="confirmedPhone" style="margin-bottom:18px"></div>
+          <button class="btn btn-gold" id="loginBtn">Log in to demo terminal</button>
+        </div>
+      </div>
+
+      <div class="disclosure">
+        <b>How this works:</b> we check that your number matches a valid Kenyan mobile format — that's it. No SMS code is sent and nothing is charged. This is a simulation feature to demonstrate the onboarding flow, not an identity verification service. A production financial product would require licensed KYC/AML verification before granting access.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TERMINAL ============ -->
+<div id="screen-terminal">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="brand-mark" style="margin-bottom:0">
+        <div class="brand-glyph" style="width:30px;height:30px;font-size:15px">K</div>
+        <div class="brand-name" style="font-size:15px">Kesho</div>
+      </div>
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-view="trade">Trade</button>
+        <button class="nav-tab" data-view="deposit">Deposit</button>
+        <button class="nav-tab" data-view="withdraw">Withdraw</button>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="balance-pill">
+        <span class="bl">Demo Balance</span>
+        <span class="bv" id="topBalance">KES 0.00</span>
+      </div>
+      <button class="icon-btn" id="themeToggle" title="Toggle theme">◐</button>
+      <button class="icon-btn" id="marketMenuBtn" style="display:none">☰</button>
+    </div>
+  </div>
+
+  <!-- ---- TRADE VIEW ---- -->
+  <div class="view active" id="view-trade">
+    <div class="scrim" id="scrim"></div>
+    <div class="market-sidebar" id="marketSidebar">
+      <div class="hd">Virtual Instruments</div>
+      <div id="marketList"></div>
+    </div>
+
+    <div class="chart-col">
+      <div class="chart-head">
+        <div>
+          <div class="ch-title" id="chTitle">—</div>
+          <div class="ch-price mono" id="chPrice">0.00</div>
+        </div>
+        <div class="ch-meta">
+          <div class="ch-stat">24h change <b class="mono" id="chChange">0.00%</b></div>
+          <div class="ch-stat">24h high <b class="mono" id="chHigh">—</b></div>
+          <div class="ch-stat">24h low <b class="mono" id="chLow">—</b></div>
+        </div>
+      </div>
+      <div class="chart-area">
+        <canvas id="chartCanvas"></canvas>
+      </div>
+
+      <div class="positions-panel">
+        <div class="pp-tabs">
+          <button class="pp-tab active" data-ptab="open">Open Positions</button>
+          <button class="pp-tab" data-ptab="history">Trade History</button>
+        </div>
+        <div class="pp-body">
+          <table id="openTable">
+            <thead><tr><th>Instrument</th><th>Side</th><th>Stake</th><th>Entry</th><th>Current</th><th>P/L</th><th></th></tr></thead>
+            <tbody id="openTbody"><tr class="empty-row"><td colspan="7">No open positions. Place a trade to see it here.</td></tr></tbody>
+          </table>
+          <table id="historyTable" style="display:none">
+            <thead><tr><th>Instrument</th><th>Side</th><th>Stake</th><th>Entry</th><th>Exit</th><th>Result</th></tr></thead>
+            <tbody id="historyTbody"><tr class="empty-row"><td colspan="6">No closed trades yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="order-panel" id="orderPanel">
+      <div class="op-title">Place Order</div>
+      <div class="op-row">
+        <label>Stake (KES demo credits)</label>
+        <input class="amt-input mono" id="stakeInput" type="number" value="500" min="10" step="10">
+        <div class="chip-row">
+          <button class="chip" data-amt="100">100</button>
+          <button class="chip" data-amt="500">500</button>
+          <button class="chip" data-amt="1000">1,000</button>
+          <button class="chip" data-amt="5000">5,000</button>
+        </div>
+      </div>
+      <div class="op-row">
+        <label>Multiplier</label>
+        <div class="lev-track">
+          <input type="range" id="levRange" min="1" max="50" value="10">
+          <span class="lev-val mono" id="levVal">x10</span>
+        </div>
+      </div>
+      <div class="bs-row">
+        <button class="btn btn-buy" id="buyBtn">Buy / Up</button>
+        <button class="btn btn-sell" id="sellBtn">Sell / Down</button>
+      </div>
+      <div class="op-summary">
+        Exposure <span class="mono" id="sumExposure">KES 0</span><br>
+        Potential fee <span class="mono" id="sumFee">KES 0</span><br>
+        Available balance <span class="mono" id="sumBalance">KES 0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---- DEPOSIT VIEW ---- -->
+  <div class="view" id="view-deposit">
+    <div class="view-head">
+      <h2>Add demo credits</h2>
+      <p>Top up your practice balance to keep exploring the terminal.</p>
+    </div>
+    <div class="demo-banner">◆ These are simulated top-up channels. Selecting one instantly credits virtual balance — no real payment is processed and no real money changes hands.</div>
+
+    <div class="merchant-grid" id="merchantGrid"></div>
+
+    <div class="form-card" id="depositForm">
+      <h3 id="depositFormTitle">Top up via — select a channel above</h3>
+      <div class="op-row">
+        <label>Amount (KES demo credits)</label>
+        <input class="amt-input mono" id="depositAmt" type="number" value="1000" min="50" step="50">
+        <div class="chip-row">
+          <button class="chip" data-damt="500">500</button>
+          <button class="chip" data-damt="1000">1,000</button>
+          <button class="chip" data-damt="5000">5,000</button>
+          <button class="chip" data-damt="10000">10,000</button>
+        </div>
+      </div>
+      <button class="btn btn-gold" id="depositBtn" disabled>Select a channel first</button>
+      <div class="status-tracker" id="depositTracker">
+        <div class="st-steps">
+          <div class="st-step"><div class="st-dot" id="dstep1">1</div><div class="st-label">Requested</div></div>
+          <div class="st-step"><div class="st-dot" id="dstep2">2</div><div class="st-label">Confirming</div></div>
+          <div class="st-step"><div class="st-dot" id="dstep3">3</div><div class="st-label">Credited</div></div>
+        </div>
+        <div class="st-msg" id="depositMsg">Waiting to start…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---- WITHDRAW VIEW ---- -->
+  <div class="view" id="view-withdraw">
+    <div class="view-head">
+      <h2>Withdraw demo credits</h2>
+      <p>Simulate moving virtual balance out of your practice account.</p>
+    </div>
+    <div class="demo-banner">◆ This withdrawal flow is fully simulated for demonstration purposes. No real disbursement occurs.</div>
+
+    <div class="form-card">
+      <h3>Withdrawal method</h3>
+      <div class="seg-row">
+        <button class="seg active" data-wmethod="p2p">P2P Demo</button>
+        <button class="seg" data-wmethod="bank">Bank Demo</button>
+      </div>
+      <div class="op-row">
+        <label>Amount (KES demo credits)</label>
+        <input class="amt-input mono" id="withdrawAmt" type="number" value="500" min="50" step="50">
+      </div>
+      <div class="op-row" style="font-size:11px;color:var(--muted)">Estimated processing time: <b style="color:var(--text)">~5 minutes</b> (accelerated to ~15s in this demo)</div>
+      <button class="btn btn-gold" id="withdrawBtn">Request withdrawal</button>
+
+      <div class="status-tracker" id="withdrawTracker">
+        <div class="st-steps">
+          <div class="st-step"><div class="st-dot" id="wstep1">1</div><div class="st-label">Pending</div></div>
+          <div class="st-step"><div class="st-dot" id="wstep2">2</div><div class="st-label">Processing</div></div>
+          <div class="st-step"><div class="st-dot" id="wstep3">3</div><div class="st-label">Completed</div></div>
+        </div>
+        <div class="st-msg" id="withdrawMsg">Waiting to start…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-nav">
+    <button class="mnav-item active" data-view="trade"><span class="ic">▲▼</span>Trade</button>
+    <button class="mnav-item" data-view="deposit"><span class="ic">＋</span>Deposit</button>
+    <button class="mnav-item" data-view="withdraw"><span class="ic">－</span>Withdraw</button>
+    <button class="mnav-item" id="mnavMarkets"><span class="ic">☰</span>Markets</button>
+    <button class="mnav-item" id="mnavOrder"><span class="ic">＄</span>Order</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== STATE ===================== */
+const state = {
+  phone: '',
+  balance: 10000,
+  positions: [],
+  history: [],
+  markets: [
+    {id:'nova25', name:'Nova-25', tag:'Synthetic Index', price:1245.30, vol:0.006, drift:0},
+    {id:'pulse10', name:'Pulse-10', tag:'Synthetic Index', price:582.10, vol:0.010, drift:0},
+    {id:'ember50', name:'Ember-50', tag:'Synthetic Index', price:3390.75, vol:0.004, drift:0},
+    {id:'tidal75', name:'Tidal-75', tag:'Synthetic Index', price:8120.40, vol:0.003, drift:0},
+    {id:'quartz', name:'Quartz Surge', tag:'Momentum', price:210.55, vol:0.02, drift:0.0003},
+    {id:'basalt', name:'Basalt Crash', tag:'Momentum', price:498.20, vol:0.018, drift:-0.0003},
+  ],
+  selectedMarket: 'nova25',
+  priceSeries: {},
+  merchants: [
+    {id:'m1', name:'Trader-KE-014', badge:'Verified', rating:4.9, methods:[{n:'Mobile Wallet',c:'#1FCB84'}], speed:'~2 min', limits:'KES 100 – 150,000', status:'Online'},
+    {id:'m2', name:'Nairobi Desk 02', badge:'Verified', rating:4.8, methods:[{n:'Mobile Wallet',c:'#1FCB84'}], speed:'~3 min', limits:'KES 200 – 80,000', status:'Online'},
+    {id:'m3', name:'NSSE Liquidity', badge:'Verified', rating:5.0, methods:[{n:'Wallet A',c:'#1FCB84'},{n:'Wallet B',c:'#E8B84B'},{n:'Bank Rail',c:'#7AA7FF'}], speed:'~1 min', limits:'KES 500 – 500,000', status:'Online'},
+  ],
+  selectedMerchant: null,
+};
+
+for(const m of state.markets){
+  const arr=[];
+  let p=m.price;
+  for(let i=0;i<80;i++){ p = p*(1+(Math.random()-0.5)*m.vol*0.4); arr.push(p); }
+  state.priceSeries[m.id]=arr;
+}
+
+/* ===================== UTIL ===================== */
+function fmt(n){ return n.toLocaleString('en-KE',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function toast(msg, cls){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(cls?(' '+cls):'');
+  clearTimeout(t._to);
+  t._to=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* ===================== AUTH FLOW ===================== */
+const phoneInput=document.getElementById('phoneInput');
+const startBtn=document.getElementById('startVerifyBtn');
+const phoneHint=document.getElementById('phoneHint');
+const verifyWrap=document.getElementById('verifyWrap');
+const countdownNum=document.getElementById('countdownNum');
+const verifyText=document.getElementById('verifyText');
+const verifyDone=document.getElementById('verifyDone');
+const confirmedPhone=document.getElementById('confirmedPhone');
+
+function validKenyanLocal(v){
+  // Kenyan local subscriber numbers (without +254): 7XXXXXXXX or 1XXXXXXXX, 9 digits
+  return /^[71]\d{8}$/.test(v);
+}
+phoneInput.addEventListener('input',()=>{
+  phoneInput.value = phoneInput.value.replace(/\D/g,'').slice(0,9);
+  const ok = validKenyanLocal(phoneInput.value);
+  startBtn.disabled = !ok;
+  phoneHint.textContent = phoneInput.value.length===0
+    ? 'Format: 7XX XXX XXX or 1XX XXX XXX'
+    : (ok ? 'Looks good' : 'Enter a valid Kenyan mobile number');
+  phoneHint.className = 'field-hint' + (phoneInput.value.length>0 && !ok ? ' error':'');
+});
+
+startBtn.addEventListener('click', ()=>{
+  if(startBtn.disabled) return;
+  state.phone = '+254'+phoneInput.value;
+  startBtn.style.display='none';
+  phoneInput.disabled=true;
+  verifyWrap.classList.add('show');
+  let n=15;
+  countdownNum.textContent=n;
+  const iv=setInterval(()=>{
+    n--;
+    if(n<=0){
+      clearInterval(iv);
+      document.querySelector('.radar').style.display='none';
+      verifyText.style.display='none';
+      document.querySelector('.verify-sub').style.display='none';
+      verifyDone.classList.add('show');
+      confirmedPhone.textContent = state.phone;
+    } else {
+      countdownNum.textContent=n;
+    }
+  },1000);
+});
+
+document.getElementById('loginBtn').addEventListener('click', ()=>{
+  document.getElementById('screen-auth').style.display='none';
+  document.getElementById('screen-terminal').classList.add('show');
+  initTerminal();
+});
+
+/* ===================== THEME ===================== */
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  const html=document.documentElement;
+  html.setAttribute('data-theme', html.getAttribute('data-theme')==='dark'?'light':'dark');
+});
+
+/* ===================== NAV ===================== */
+function setView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.toggle('active', el.dataset.view===v));
+  document.querySelectorAll('.mnav-item[data-view]').forEach(el=>el.classList.toggle('active', el.dataset.view===v));
+}
+document.querySelectorAll('.nav-tab, .mnav-item[data-view]').forEach(el=>{
+  el.addEventListener('click', ()=>setView(el.dataset.view));
+});
+
+/* mobile drawers */
+const scrim=document.getElementById('scrim');
+const marketSidebar=document.getElementById('marketSidebar');
+const orderPanel=document.getElementById('orderPanel');
+function openDrawer(el){ el.classList.add('open'); scrim.classList.add('show'); }
+function closeDrawers(){ marketSidebar.classList.remove('open'); orderPanel.classList.remove('open'); scrim.classList.remove('show'); }
+document.getElementById('mnavMarkets').addEventListener('click', ()=>openDrawer(marketSidebar));
+document.getElementById('mnavOrder').addEventListener('click', ()=>openDrawer(orderPanel));
+scrim.addEventListener('click', closeDrawers);
+
+/* ===================== TERMINAL INIT ===================== */
+let chartCtx, canvas, animId;
+function initTerminal(){
+  renderBalance();
+  renderMarketList();
+  renderMerchants();
+  selectMarket(state.selectedMarket);
+  canvas=document.getElementById('chartCanvas');
+  chartCtx=canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  startPriceLoop();
+  renderPositions();
+  renderHistory();
+}
+
+function resizeCanvas(){
+  const rect=canvas.parentElement.getBoundingClientRect();
+  canvas.width=rect.width*devicePixelRatio;
+  canvas.height=rect.height*devicePixelRatio;
+  canvas.style.width=rect.width+'px';
+  canvas.style.height=rect.height+'px';
+}
+
+function renderBalance(){
+  const v='KES '+fmt(state.balance);
+  document.getElementById('topBalance').textContent=v;
+  document.getElementById('sumBalance').textContent=v;
+}
+
+function renderMarketList(){
+  const wrap=document.getElementById('marketList');
+  wrap.innerHTML='';
+  state.markets.forEach(m=>{
+    const series=state.priceSeries[m.id];
+    const chg=((series[series.length-1]-series[0])/series[0]*100);
+    const div=document.createElement('div');
+    div.className='market-item'+(m.id===state.selectedMarket?' active':'');
+    div.innerHTML=`
+      <div>
+        <div class="mi-name">${m.name}</div>
+        <div class="mi-tag">${m.tag}</div>
+      </div>
+      <div>
+        <div class="mi-price">${fmt(m.price)}</div>
+        <div class="mi-chg ${chg>=0?'up':'down'}">${chg>=0?'+':''}${chg.toFixed(2)}%</div>
+      </div>`;
+    div.addEventListener('click', ()=>{ selectMarket(m.id); closeDrawers(); });
+    wrap.appendChild(div);
+  });
+}
+
+function selectMarket(id){
+  state.selectedMarket=id;
+  const m=state.markets.find(x=>x.id===id);
+  document.getElementById('chTitle').textContent=m.name+' · '+m.tag;
+  renderMarketList();
+  updateChartHead();
+}
+
+function updateChartHead(){
+  const m=state.markets.find(x=>x.id===state.selectedMarket);
+  const series=state.priceSeries[m.id];
+  const chg=((series[series.length-1]-series[0])/series[0]*100);
+  document.getElementById('chPrice').textContent=fmt(m.price);
+  document.getElementById('chChange').textContent=(chg>=0?'+':'')+chg.toFixed(2)+'%';
+  document.getElementById('chChange').className='mono '+(chg>=0?'up':'down');
+  document.getElementById('chHigh').textContent=fmt(Math.max(...series));
+  document.getElementById('chLow').textContent=fmt(Math.min(...series));
+}
+
+function startPriceLoop(){
+  setInterval(()=>{
+    state.markets.forEach(m=>{
+      const series=state.priceSeries[m.id];
+      const shock=(Math.random()-0.5)*m.vol + m.drift;
+      m.price = Math.max(0.01, m.price*(1+shock));
+      series.push(m.price);
+      if(series.length>120) series.shift();
+    });
+    renderBalance();
+    renderMarketList();
+    updateChartHead();
+    drawChart();
+    updatePositionsPL();
+  }, 900);
+}
+
+function drawChart(){
+  const m=state.markets.find(x=>x.id===state.selectedMarket);
+  const series=state.priceSeries[m.id];
+  const w=canvas.width, h=canvas.height;
+  chartCtx.clearRect(0,0,w,h);
+  const min=Math.min(...series), max=Math.max(...series);
+  const pad=h*0.12;
+  const styles=getComputedStyle(document.documentElement);
+  const up = series[series.length-1]>=series[0];
+  const lineColor = up? styles.getPropertyValue('--buy').trim() : styles.getPropertyValue('--sell').trim();
+
+  const pts=series.map((p,i)=>{
+    const x=(i/(series.length-1))*w;
+    const y=h-pad-((p-min)/(max-min||1))*(h-pad*2);
+    return [x,y];
+  });
+
+  const grad=chartCtx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, lineColor+'55');
+  grad.addColorStop(1, lineColor+'00');
+  chartCtx.beginPath();
+  chartCtx.moveTo(pts[0][0], h);
+  pts.forEach(p=>chartCtx.lineTo(p[0],p[1]));
+  chartCtx.lineTo(pts[pts.length-1][0], h);
+  chartCtx.closePath();
+  chartCtx.fillStyle=grad;
+  chartCtx.fill();
+
+  chartCtx.beginPath();
+  pts.forEach((p,i)=> i===0? chartCtx.moveTo(p[0],p[1]) : chartCtx.lineTo(p[0],p[1]));
+  chartCtx.strokeStyle=lineColor;
+  chartCtx.lineWidth=2*devicePixelRatio;
+  chartCtx.lineJoin='round';
+  chartCtx.stroke();
+
+  // last price dot
+  const last=pts[pts.length-1];
+  chartCtx.beginPath();
+  chartCtx.arc(last[0],last[1],4*devicePixelRatio,0,Math.PI*2);
+  chartCtx.fillStyle=lineColor;
+  chartCtx.fill();
+}
+
+/* ===================== ORDER PANEL ===================== */
+const stakeInput=document.getElementById('stakeInput');
+const levRange=document.getElementById('levRange');
+const levVal=document.getElementById('levVal');
+levRange.addEventListener('input', updateSummary);
+stakeInput.addEventListener('input', updateSummary);
+document.querySelectorAll('.chip[data-amt]').forEach(c=>{
+  c.addEventListener('click', ()=>{ stakeInput.value=c.dataset.amt; updateSummary(); });
+});
+function updateSummary(){
+  const stake=parseFloat(stakeInput.value)||0;
+  const lev=parseInt(levRange.value);
+  levVal.textContent='x'+lev;
+  document.getElementById('sumExposure').textContent='KES '+fmt(stake*lev);
+  document.getElementById('sumFee').textContent='KES '+fmt(stake*0.01);
+}
+updateSummary();
+
+function placeOrder(side){
+  const stake=parseFloat(stakeInput.value)||0;
+  const lev=parseInt(levRange.value);
+  if(stake<10){ toast('Minimum stake is KES 10'); return; }
+  if(stake>state.balance){ toast('Insufficient demo balance'); return; }
+  const m=state.markets.find(x=>x.id===state.selectedMarket);
+  state.balance-=stake;
+  state.positions.push({
+    id:'p'+Date.now(),
+    marketId:m.id, marketName:m.name, side, stake, leverage:lev,
+    entry:m.price, opened:Date.now()
+  });
+  renderBalance();
+  renderPositions();
+  toast((side==='buy'?'Bought ':'Sold ')+m.name+' at '+fmt(m.price), side);
+}
+document.getElementById('buyBtn').addEventListener('click', ()=>placeOrder('buy'));
+document.getElementById('sellBtn').addEventListener('click', ()=>placeOrder('sell'));
+
+function renderPositions(){
+  const tb=document.getElementById('openTbody');
+  if(state.positions.length===0){
+    tb.innerHTML='<tr class="empty-row"><td colspan="7">No open positions. Place a trade to see it here.</td></tr>';
+    return;
+  }
+  tb.innerHTML='';
+  state.positions.forEach(p=>{
+    const m=state.markets.find(x=>x.id===p.marketId);
+    const pl=calcPL(p,m.price);
+    const tr=document.createElement('tr');
+    tr.dataset.pid=p.id;
+    tr.innerHTML=`
+      <td>${p.marketName}</td>
+      <td><span class="side-tag ${p.side}">${p.side.toUpperCase()}</span></td>
+      <td>${fmt(p.stake)}</td>
+      <td>${fmt(p.entry)}</td>
+      <td class="cur-price">${fmt(m.price)}</td>
+      <td class="pl-cell ${pl>=0?'up':'down'}">${pl>=0?'+':''}${fmt(pl)}</td>
+      <td><button class="close-btn" data-close="${p.id}">Close</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('[data-close]').forEach(btn=>{
+    btn.addEventListener('click', ()=>closePosition(btn.dataset.close));
+  });
+}
+
+function calcPL(p, currentPrice){
+  const change=(currentPrice-p.entry)/p.entry;
+  const dirChange = p.side==='buy'? change : -change;
+  return p.stake * dirChange * p.leverage;
+}
+
+function updatePositionsPL(){
+  if(state.positions.length===0) return;
+  const tb=document.getElementById('openTbody');
+  state.positions.forEach(p=>{
+    const m=state.markets.find(x=>x.id===p.marketId);
+    const pl=calcPL(p,m.price);
+    const row=tb.querySelector(`tr[data-pid="${p.id}"]`);
+    if(row){
+      row.querySelector('.cur-price').textContent=fmt(m.price);
+      const cell=row.querySelector('.pl-cell');
+      cell.textContent=(pl>=0?'+':'')+fmt(pl);
+      cell.className='pl-cell '+(pl>=0?'up':'down');
+    }
+  });
+}
+
+function closePosition(id){
+  const idx=state.positions.findIndex(p=>p.id===id);
+  if(idx===-1) return;
+  const p=state.positions[idx];
+  const m=state.markets.find(x=>x.id===p.marketId);
+  const pl=calcPL(p,m.price);
+  state.balance += p.stake + pl;
+  state.positions.splice(idx,1);
+  state.history.unshift({...p, exit:m.price, pl, closed:Date.now()});
+  renderBalance();
+  renderPositions();
+  renderHistory();
+  toast('Closed '+p.marketName+' · '+(pl>=0?'+':'')+'KES '+fmt(pl), pl>=0?'buy':'sell');
+}
+
+function renderHistory(){
+  const tb=document.getElementById('historyTbody');
+  if(state.history.length===0){
+    tb.innerHTML='<tr class="empty-row"><td colspan="6">No closed trades yet.</td></tr>';
+    return;
+  }
+  tb.innerHTML='';
+  state.history.forEach(h=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${h.marketName}</td>
+      <td><span class="side-tag ${h.side}">${h.side.toUpperCase()}</span></td>
+      <td>${fmt(h.stake)}</td>
+      <td>${fmt(h.entry)}</td>
+      <td>${fmt(h.exit)}</td>
+      <td class="${h.pl>=0?'up':'down'}">${h.pl>=0?'+':''}${fmt(h.pl)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+document.querySelectorAll('.pp-tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.pp-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const isOpen=t.dataset.ptab==='open';
+    document.getElementById('openTable').style.display=isOpen?'table':'none';
+    document.getElementById('historyTable').style.display=isOpen?'none':'table';
+  });
+});
+
+/* ===================== DEPOSITS ===================== */
+function renderMerchants(){
+  const grid=document.getElementById('merchantGrid');
+  grid.innerHTML='';
+  state.merchants.forEach(m=>{
+    const card=document.createElement('div');
+    card.className='merchant-card';
+    card.innerHTML=`
+      <div class="mc-top">
+        <div class="mc-name">${m.name} <span class="verified-badge">✓ ${m.badge}</span></div>
+        <div class="mc-rating">★ ${m.rating}</div>
+      </div>
+      <div class="mc-status"><span class="status-dot"></span>${m.status} · responds fast</div>
+      <div class="mc-methods">
+        ${m.methods.map(x=>`<span class="method-chip"><span class="method-dot" style="background:${x.c}"></span>${x.n}</span>`).join('')}
+      </div>
+      <div class="mc-stats">
+        <div>Avg. speed<b>${m.speed}</b></div>
+        <div>Limits<b>${m.limits}</b></div>
+      </div>
+      <button class="btn btn-outline" data-merchant="${m.id}">Select channel</button>`;
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll('[data-merchant]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      state.selectedMerchant=btn.dataset.merchant;
+      const m=state.merchants.find(x=>x.id===state.selectedMerchant);
+      document.getElementById('depositFormTitle').textContent='Top up via '+m.name;
+      document.getElementById('depositBtn').disabled=false;
+      document.getElementById('depositBtn').textContent='Add demo credits';
+      grid.querySelectorAll('.merchant-card').forEach(c=>c.style.borderColor='var(--border)');
+      btn.closest('.merchant-card').style.borderColor='var(--gold)';
+    });
+  });
+}
+
+document.querySelectorAll('.chip[data-damt]').forEach(c=>{
+  c.addEventListener('click', ()=>{ document.getElementById('depositAmt').value=c.dataset.damt; });
+});
+
+document.getElementById('depositBtn').addEventListener('click', function(){
+  if(this.disabled) return;
+  const amt=parseFloat(document.getElementById('depositAmt').value)||0;
+  if(amt<50){ toast('Minimum top-up is KES 50'); return; }
+  this.disabled=true;
+  const tracker=document.getElementById('depositTracker');
+  tracker.classList.add('show');
+  const [s1,s2,s3]=[document.getElementById('dstep1'),document.getElementById('dstep2'),document.getElementById('dstep3')];
+  const msg=document.getElementById('depositMsg');
+  [s1,s2,s3].forEach(s=>s.classList.remove('done','active'));
+  s1.classList.add('active'); msg.textContent='Request received…';
+  setTimeout(()=>{
+    s1.classList.replace('active','done'); s2.classList.add('active');
+    msg.textContent='Confirming with '+state.merchants.find(x=>x.id===state.selectedMerchant).name+'…';
+  },1400);
+  setTimeout(()=>{
+    s2.classList.replace('active','done'); s3.classList.add('active');
+    msg.textContent='Crediting your demo balance…';
+  },3200);
+  setTimeout(()=>{
+    s3.classList.replace('active','done');
+    msg.textContent='Done — demo credits added.';
+    state.balance+=amt;
+    renderBalance();
+    toast('+KES '+fmt(amt)+' demo credits added','buy');
+    this.disabled=false;
+  },4600);
+});
+
+/* ===================== WITHDRAWALS ===================== */
+let withdrawMethod='p2p';
+document.querySelectorAll('[data-wmethod]').forEach(s=>{
+  s.addEventListener('click', ()=>{
+    document.querySelectorAll('[data-wmethod]').forEach(x=>x.classList.remove('active'));
+    s.classList.add('active');
+    withdrawMethod=s.dataset.wmethod;
+  });
+});
+
+document.getElementById('withdrawBtn').addEventListener('click', function(){
+  const amt=parseFloat(document.getElementById('withdrawAmt').value)||0;
+  if(amt<50){ toast('Minimum withdrawal is KES 50'); return; }
+  if(amt>state.balance){ toast('Insufficient demo balance'); return; }
+  this.disabled=true;
+  state.balance-=amt;
+  renderBalance();
+  const tracker=document.getElementById('withdrawTracker');
+  tracker.classList.add('show');
+  const [s1,s2,s3]=[document.getElementById('wstep1'),document.getElementById('wstep2'),document.getElementById('wstep3')];
+  const msg=document.getElementById('withdrawMsg');
+  [s1,s2,s3].forEach(s=>s.classList.remove('done','active'));
+  s1.classList.add('active'); msg.textContent='Withdrawal request queued…';
+  setTimeout(()=>{
+    s1.classList.replace('active','done'); s2.classList.add('active');
+    msg.textContent='Processing via '+(withdrawMethod==='p2p'?'P2P demo channel':'bank demo channel')+'…';
+  },4000);
+  setTimeout(()=>{
+    s2.classList.replace('active','done'); s3.classList.add('active');
+    msg.textContent='Finalizing…';
+  },9000);
+  setTimeout(()=>{
+    s3.classList.replace('active','done');
+    msg.textContent='Completed — demo withdrawal simulated.';
+    toast('Withdrawal of KES '+fmt(amt)+' completed (demo)','sell');
+    this.disabled=false;
+  },14000);
+});
+</script>
+</body>
+</html>
