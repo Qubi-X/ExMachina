@@ -9248,20 +9248,22 @@ PRE.html = function () {
   var integ = PRE.integrity(), col = act === 'NO TRADE' ? 'var(--muted)' : 'var(--green)';
   function row(a, b, c) { return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:2px 0;border-bottom:1px solid var(--border2)"><span style="color:var(--muted)">' + a + '</span><span style="font-family:var(--mono,monospace);text-align:right;color:' + (c || 'var(--text,inherit)') + '">' + b + '</span></div>'; }
   var pt = best && best.pat ? best.pat : null;
+  var PR = patternRows(s);
   if (noPat) h += '<div style="margin:4px 0 6px;padding:6px 8px;border-radius:4px;background:rgba(255,80,80,.10);border:1px solid var(--red);color:var(--red);font-size:11px;font-weight:600">NO RELIABLE PATTERN DETECTED → NO TRADE</div>';
-  h += row('Current Pattern', cls.join(' → ') + ' → ?') + row('Cursor Pattern', lastN.join(' → ') + ' → ?') + row('Parity', eo.join(' → ') + ' → ?')
+  h += row('Current Pattern', cls.join(' → ') + ' → ?<br>' + leadTxt(PR.lead.CURRENT)) + row('Cursor Pattern', lastN.join(' → ') + ' → ?<br>' + leadTxt(PR.lead.CURSOR)) + row('Parity', eo.join(' → ') + ' → ?<br>' + leadTxt(PR.lead.PARITY))
     + row('Detected Regime', dispRegime(s)) + row('Prediction (+' + s.h + ' tick' + (s.h > 1 ? 's' : '') + ')', best ? best.ev.label + (best.edge < cfg.minEdge ? ' <span style="color:var(--muted)">(no edge)</span>' : '') : '—', best && act !== 'NO TRADE' ? 'var(--green)' : null)
     + row('Confidence', best ? pc(best.conf, 1) + ' <span style="color:var(--muted)">(base ' + pc(best.ev.p0, 0) + ')</span>' : '—')
     + row('Pattern Reliability', pt ? pc(pt.R, 0) : '—') + row('Occurrences', pt ? (pt.p.trainN + pt.p.oosN) + ' <span style="color:var(--muted)">(' + pt.p.oosN + ' out-of-sample)</span>' : '—')
     + row('Historical Success', pt ? pc((pt.p.trainHit + pt.p.oosHit) / (pt.p.trainN + pt.p.oosN)) + ' <span style="color:var(--muted)">OOS ' + (pt.p.oosN ? pc(pt.p.oosHit / pt.p.oosN) : '—') + '</span>' : '—')
     + row('Model Agreement', best ? best.votesFor + ' / 10' : '—') + row('Recommended Action', '<b>' + act + '</b>', col);
   if (d && d.reasons.length && act === 'NO TRADE') h += '<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5">' + d.reasons.slice(0, 4).map(function (r) { return '• ' + esc(r); }).join('<br>') + '</div>';
-  // strongest patterns
-  var pl = []; s.pats.forEach(function (p) { if (p.status === 'live' || p.status === 'cand') pl.push({ p: p, R: pReli(p) }); });
-  pl.sort(function (a, b) { return (b.p.status === 'live') - (a.p.status === 'live') || b.R - a.R; });
-  h += '<div style="font-size:9.5px;color:var(--muted);letter-spacing:.3px;margin:8px 0 2px">STRONGEST PATTERNS (' + s.stats.promoted + ' promoted · ' + s.stats.expired + ' expired · ' + s.stats.rejected + ' rejected)</div>';
-  if (!pl.length) h += '<div style="font-size:10px;color:var(--muted)">None survived discovery yet.</div>';
-  else h += '<div style="font-size:10px;font-family:var(--mono,monospace);overflow-x:auto">' + pl.slice(0, 6).map(function (x) { var p = x.p; return '<div style="display:flex;gap:8px;justify-content:space-between;padding:1px 0;white-space:nowrap"><span>' + (p.status === 'live' ? '●' : '○') + ' ' + esc(p.key) + ' ⇒ ' + EV[p.ev].id + '</span><span>n ' + (p.trainN + p.oosN) + ' · OOS ' + p.oosN + (p.oosN ? ' @ ' + pc(p.oosHit / p.oosN, 0) : '') + ' · R ' + pc(x.R, 0) + '</span></div>'; }).join('') + '</div>';
+  // top-20 patterns, tagged by category; ★ = leader of its category among patterns active right now
+  h += '<div style="font-size:9.5px;color:var(--muted);letter-spacing:.3px;margin:8px 0 2px">TOP 20 PATTERNS (' + s.stats.promoted + ' promoted · ' + s.stats.expired + ' expired · ' + s.stats.rejected + ' rejected) — ● live · ○ candidate · ◌ unvalidated watch · NOW = matches current ticks</div>';
+  h += '<div style="font-size:10px;font-family:var(--mono,monospace);max-height:280px;overflow:auto">' + PR.rows.map(function (r, n) {
+    var dot = r.st === 'live' ? '●' : r.st === 'cand' ? '○' : '◌', stat;
+    if (r.st === 'watch') stat = 'n ' + r.n + ' @ ' + pc(r.rate, 0) + ' · z ' + r.z.toFixed(1);
+    else { var p = r.p; stat = 'n ' + (p.trainN + p.oosN) + ' · OOS ' + p.oosN + (p.oosN ? ' @ ' + pc(p.oosHit / p.oosN, 0) : '') + ' · R ' + pc(r.R, 0); }
+    return '<div style="display:flex;gap:6px;justify-content:space-between;padding:1px 0;white-space:nowrap' + (r.act ? ';color:var(--green)' : '') + '"><span>' + (n + 1) + '. ' + (r.star ? '★' : '&nbsp;') + dot + ' <span style="color:var(--muted)">' + r.cat.slice(0, 4) + '</span> ' + esc(r.key) + ' ⇒ ' + EV[r.ev].label + (r.act ? ' <b>NOW</b>' : '') + '</span><span>' + stat + '</span></div>'; }).join('') + '</div>';
   // validation
   var mc = s.mc; h += '<div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5">Validation: Monte-Carlo shuffle test ' + (mc.done ? 'p=' + mc.p.toFixed(3) + (mc.p <= cfg.alpha ? ' (structure beyond chance)' : ' (consistent with random)') : 'running…') + ' · ensemble skill z=' + skZ(s.esk[0]).toFixed(2) + ' · fired signals ' + (s.dperf.n ? s.dperf.hit + '/' + s.dperf.n + ' hit vs ' + (s.dperf.exp).toFixed(1) + ' expected by chance' : 'none yet') + ' · best window ' + WINS[bestWin()] + ' ticks · integrity ' + (integ && integ.sync ? 'OK' : 'CHECK') + ' · ' + s.n + ' ticks</div>';
   h += '<details data-k="models"' + (ui.open.models ? ' open' : '') + ' style="margin-top:6px"><summary style="font-size:10px;color:var(--muted);cursor:pointer">Models (10) — measured vs. uniform baseline</summary><div style="font-size:10px;font-family:var(--mono,monospace)">'
@@ -9273,6 +9275,30 @@ PRE.html = function () {
     .map(function (b) { return '<button data-pre="' + b[0] + '" style="padding:6px;background:var(--violet-dim);border:1px solid var(--violet);border-radius:4px;color:var(--violet);font-size:10px;cursor:pointer">' + b[1] + '</button>'; }).join('') + '</div>';
   return h + '<div style="font-size:9px;color:var(--muted);margin-top:6px">Statistical structure search on RNG-derived digits — not a guarantee. No validated edge ⇒ NO TRADE.</div></div>';
 };
+var CATS = { ou: 'CURRENT', eo: 'PARITY', dg: 'CURSOR', cm: 'CURSOR', zn: 'CURSOR', cp: 'CURSOR', tm: 'CURSOR', sr: 'STREAK', rg: 'REGIME' };
+function catOf(key) { return CATS[key.split(/[0-9:]/)[0]] || 'OTHER'; }
+// Top-20 list: validated/candidate patterns first, then the strongest *currently active* contexts as unvalidated "watch" rows.
+function patternRows(s) {
+  var rows = [], seen = {};
+  s.pats.forEach(function (p) { if (p.status === 'live' || p.status === 'cand') { rows.push({ key: p.key, ev: p.ev, st: p.status, p: p, R: pReli(p), act: s.curKeys.indexOf(p.key) >= 0, cat: catOf(p.key) }); seen[p.key + '|' + p.ev] = 1; } });
+  rows.sort(function (a, b) { return (b.st === 'live') - (a.st === 'live') || b.R - a.R; });
+  rows = rows.slice(0, 20);
+  if (rows.length < 20) {
+    var w = [];
+    s.curKeys.forEach(function (key) { var t = s.tab.get(key); if (!t || t.n < 10) return; var bz = -1e9, be = -1;
+      for (var e = 0; e < EV.length; e++) { var h = 0; for (var d = 0; d < 10; d++) if (EV[e].m[d]) h += t.c[d]; var p0 = EV[e].p0, z = (h - t.n * p0) / Math.sqrt(t.n * p0 * (1 - p0)); if (z > bz && !seen[key + '|' + e]) { bz = z; be = e; } }
+      if (be >= 0) { var hh = 0; for (var d2 = 0; d2 < 10; d2++) if (EV[be].m[d2]) hh += t.c[d2]; w.push({ key: key, ev: be, st: 'watch', z: bz, n: t.n, rate: hh / t.n, act: true, cat: catOf(key) }); } });
+    w.sort(function (a, b) { return b.z - a.z; });
+    rows = rows.concat(w.slice(0, 20 - rows.length));
+  }
+  // leader per category = strongest ACTIVE row (validated beats watch)
+  var lead = {};
+  rows.forEach(function (r) { if (!r.act) return; var sc = r.st === 'live' ? 2 + r.R : r.st === 'cand' ? 1 + r.R : r.z / 100; var L = lead[r.cat]; if (!L || sc > L.sc) lead[r.cat] = { r: r, sc: sc }; });
+  rows.forEach(function (r) { r.star = !!(lead[r.cat] && lead[r.cat].r === r); });
+  return { rows: rows, lead: lead };
+}
+function leadTxt(L) { if (!L) return '<span style="color:var(--muted)">no active pattern</span>'; var r = L.r, evl = EV[r.ev].label;
+  return '<span style="color:var(--muted)">★ ' + esc(r.key) + ' ⇒ ' + evl + (r.st === 'live' ? ' · R ' + pc(r.R, 0) : r.st === 'cand' ? ' · candidate' : ' · unvalidated') + '</span>'; }
 var wired = false;
 PRE.render = function (force) {
   if (typeof document === 'undefined') return; var root = document.getElementById('preRoot'); if (!root) return;
